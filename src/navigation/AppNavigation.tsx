@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import DetailsScreen from '../screens/DetailsScreen';
 import { RootStackParamList } from './types';
+import MapScreen from '../screens/MapScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -20,6 +21,11 @@ export const AppNavigator = () => {
           name="Details" 
           component={DetailsScreen} 
           options={{ title: 'Détails' }}
+        />
+        <Stack.Screen
+          name="Map"
+          component={MapScreen}
+          options={{ title: 'Carte' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
