@@ -1,6 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '../config/config';
+import JWTService from './JWTService';
+
+const API_URL = process.env.EXPO_PUBLIC_API_HOST;
 
 const AUTH_ENDPOINTS = {
     register: `${API_URL}/auth/register`,
@@ -56,7 +58,7 @@ class AuthService {
             console.log('Server response:', response.data);
 
             if (response.data.access_token) {
-                await AsyncStorage.setItem('access_token', response.data.access_token);
+                await JWTService.setToken(response.data.access_token);
                 if (response.data.role) {
                     await AsyncStorage.setItem('userRole', response.data.role);
                 }
@@ -88,7 +90,8 @@ class AuthService {
 
     async logout() {
         try {
-            await AsyncStorage.multiRemove(['access_token', 'userId', 'userRole']);
+            await AsyncStorage.multiRemove(['userId', 'userRole']);
+            await JWTService.removeToken();
         } catch (error) {
             throw this.handleError(error);
         }

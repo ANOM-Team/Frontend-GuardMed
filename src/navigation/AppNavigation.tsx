@@ -13,6 +13,7 @@ import { CustomDrawerContent } from "../components/CustomDrawerContent";
 import { useAuth } from "../context/AuthContext";
 import LoadingScreen from "../screens/LoadingScreen";
 import { Ionicons } from "@expo/vector-icons";
+import  MapScreen  from "../screens/MapScreen";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 type RootStackParamList = {
@@ -36,6 +37,7 @@ const MainDrawer = () => (
     }}
   >
     <Drawer.Screen name="Home" component={HomeScreen} />
+    <Drawer.Screen name="Map" component={MapScreen} />
     <Drawer.Screen name="Profile" component={ProfileScreen} />
     <Drawer.Screen name="Settings" component={SettingsScreen} />
     <Drawer.Screen name="Details" component={DetailsScreen} />

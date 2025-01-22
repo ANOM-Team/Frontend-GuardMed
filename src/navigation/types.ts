@@ -8,6 +8,7 @@ export type RootStackParamList = {
   Profile: undefined;
   Settings: undefined;
   Details: undefined;
+  Map: undefined;
 };
 
 declare global {

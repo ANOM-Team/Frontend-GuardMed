@@ -1,7 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { API_URL } from "../config/api";
+import JWTService from "../services/JWTService";
+
+const API_URL = process.env.EXPO_PUBLIC_API_HOST;
 
 type AuthContextType = {
   isLoading: boolean;
@@ -57,8 +59,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       const { access_token, role } = response.data;
+      
 
-      await AsyncStorage.setItem("accessToken", access_token);
+      await JWTService.setToken(access_token);
       await AsyncStorage.setItem("userRole", role);
 
       setAccessToken(access_token);
