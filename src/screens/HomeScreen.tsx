@@ -15,6 +15,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         title="Aller à la page détails" 
         onPress={() => navigation.navigate('Details')}
       />
+      <Button
+        title="Voir la carte"
+        onPress={() => navigation.navigate('Map')}
+      />
     </View>
   );
 };
