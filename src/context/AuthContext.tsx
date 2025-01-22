@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { API_URL } from "../config/api";
 
 type AuthContextType = {
   isLoading: boolean;
@@ -49,24 +51,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await fetch(
-        "http://192.168.160.117:3000/api/auth/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        email,
+        password,
+      });
 
-      const data = await response.json();
+      const { access_token, role } = response.data;
 
-      if (!response.ok) throw new Error(data.message);
+      await AsyncStorage.setItem("accessToken", access_token);
+      await AsyncStorage.setItem("userRole", role);
 
-      await AsyncStorage.setItem("accessToken", data.access_token);
-      await AsyncStorage.setItem("userRole", data.role);
-
-      setAccessToken(data.access_token);
-      setUserRole(data.role);
+      setAccessToken(access_token);
+      setUserRole(role);
       setIsAuthenticated(true);
     } catch (error) {
       throw error;
@@ -75,18 +71,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signUp = async (name: string, email: string, password: string) => {
     try {
-      const response = await fetch("http://localhost:3000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+      const response = await axios.post(`${API_URL}/auth/register`, {
+        name,
+        email,
+        password,
       });
 
-      const data = await response.json();
+      const { userId } = response.data;
 
-      if (!response.ok) throw new Error(data.message);
-
-      await AsyncStorage.setItem("userId", data.userId);
-      setUserId(data.userId);
+      await AsyncStorage.setItem("userId", userId);
+      setUserId(userId);
     } catch (error) {
       throw error;
     }
@@ -97,28 +91,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const storedUserId = await AsyncStorage.getItem("userId");
       if (!storedUserId) throw new Error("User ID not found");
 
-      const response = await fetch(
-        "http://192.168.160.117:3000/api/auth/verify",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: storedUserId, code }),
-        }
-      );
+      const response = await axios.post(`${API_URL}/auth/verify`, {
+        id: storedUserId,
+        code,
+      });
 
-      console.log("Verify response:", await response.clone().json());
+      console.log("Verify response:", response.data);
 
-      const data = await response.json();
+      const { access_token, role } = response.data;
 
-      if (!response.ok) throw new Error(data.message);
-
-      if (data.access_token) {
-        await AsyncStorage.setItem("accessToken", data.access_token);
-        setAccessToken(data.access_token);
+      if (access_token) {
+        await AsyncStorage.setItem("accessToken", access_token);
+        setAccessToken(access_token);
       }
-      if (data.role) {
-        await AsyncStorage.setItem("userRole", data.role);
-        setUserRole(data.role);
+      if (role) {
+        await AsyncStorage.setItem("userRole", role);
+        setUserRole(role);
       }
 
       setIsAuthenticated(true);

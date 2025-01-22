@@ -13,9 +13,19 @@ import { CustomDrawerContent } from "../components/CustomDrawerContent";
 import { useAuth } from "../context/AuthContext";
 import LoadingScreen from "../screens/LoadingScreen";
 import { Ionicons } from "@expo/vector-icons";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-const Stack = createNativeStackNavigator();
+type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  Verify: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 const Drawer = createDrawerNavigator();
+
+type VerifyScreenProps = NativeStackScreenProps<RootStackParamList, "Verify">;
+type VerifyScreenComponent = React.FC<VerifyScreenProps>;
 
 const MainDrawer = () => (
   <Drawer.Navigator
