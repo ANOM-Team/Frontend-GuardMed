@@ -28,12 +28,20 @@ class AuthService {
     async register(data: RegisterData) {
         try {
             const response = await axios.post(AUTH_ENDPOINTS.register, data);
-            if (response.data.userId) {
+            console.log('Register response:', response.data);
+
+            if (response.data && response.data.userId) {
                 await AsyncStorage.setItem('userId', response.data.userId);
+                return response.data;
+            } else {
+                throw new Error('Invalid response format from server');
             }
-            return response.data;
-        } catch (error) {
-            throw this.handleError(error);
+        } catch (error: any) {
+            console.error('Register error:', error.response || error);
+            if (error.response?.data?.message) {
+                throw new Error(error.response.data.message);
+            }
+            throw error;
         }
     }
 

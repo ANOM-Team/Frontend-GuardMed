@@ -41,11 +41,15 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
     try {
       setLoading(true);
       const response = await authService.register({ name, email, password });
-      if (response.userId) {
+      if (response && response.userId) {
         navigation.replace("Verify", { userId: response.userId });
+      } else {
+        throw new Error("Registration successful but no user ID received");
       }
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "An error occurred");
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || error.message || "Registration failed";
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
