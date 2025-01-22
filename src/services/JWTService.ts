@@ -1,11 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const TOKEN_KEY = "jwt_token";
+const TOKEN_KEY = "sub";
 
 const tokenService = {
   setToken: async (token: string) => {
+    console.log("Setting token:", token);
     try {
-      await AsyncStorage.setItem("TOKEN_KEY", token);
+      await AsyncStorage.setItem(TOKEN_KEY, token);
     } catch (error) {
       console.error("Error storing token:", error);
       throw error;
