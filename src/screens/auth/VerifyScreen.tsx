@@ -29,18 +29,37 @@ export const VerifyScreen: React.FC<VerifyScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const { userId } = route.params;
   const { verifyCode } = useAuth();
+  const [codeErr, setCodeErr] = useState("");
+
+  const validateForm = () => {
+    if (code == '') {
+      setCodeErr("Verification code is required");
+      return false;
+    } else {
+      setCodeErr("");
+    }
+
+    if (code.length < 4) {
+      setCodeErr("Verification code must be 4 digits long");
+      return false;
+    } else {
+      setCodeErr("");
+    }
+
+    return true;
+  }
 
   const handleVerify = async () => {
-    if (!code) {
-      alert("Please enter the verification code");
-      return;
-    }
+
+    if (!validateForm()) return;
 
     try {
       setLoading(true);
-      await verifyCode(parseInt(code));
+      const response = await verifyCode(parseInt(code));
+      console.log("Verify response:", response);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Verification failed");
+      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -63,7 +82,7 @@ export const VerifyScreen: React.FC<VerifyScreenProps> = ({
           <View style={styles.codeContainer}>
             <TextInput
               style={styles.codeInput}
-              placeholder="0000"
+              placeholder="----"
               value={code}
               onChangeText={setCode}
               keyboardType="number-pad"
@@ -71,6 +90,7 @@ export const VerifyScreen: React.FC<VerifyScreenProps> = ({
               textAlign="center"
               autoFocus
             />
+            <Text className="code-error" style={styles.inputError}>{codeErr ?? ''}</Text>
           </View>
 
           <TouchableOpacity
@@ -142,16 +162,24 @@ const styles = StyleSheet.create({
     width: 160,
     letterSpacing: 8,
   },
-  button: {
-    backgroundColor: "#007AFF",
+ button: {
+    backgroundColor: "#027E6A",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
-    width: "100%",
     marginTop: 20,
+    shadowColor: "#007AFF",
+    width: '100%',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: "#99c9ff",
+    backgroundColor: "#2B4F49",
   },
   buttonText: {
     color: "white",
@@ -168,10 +196,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   link: {
-    color: "#007AFF",
+    color: "#027E6A",
     fontSize: 14,
     fontWeight: "600",
   },
+  inputError: {
+    color: "#ff0000",
+    fontSize: 12,
+    paddingLeft: 10,
+  }
 });
 
 export default VerifyScreen;

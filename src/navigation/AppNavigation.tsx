@@ -32,7 +32,7 @@ const MainDrawer = () => (
   <Drawer.Navigator
     drawerContent={(props) => <CustomDrawerContent {...props} />}
     screenOptions={{
-      headerStyle: { backgroundColor: "#007AFF" },
+      headerStyle: { backgroundColor: "#027E6A" },
       headerTintColor: "#fff",
     }}
   >

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState} from "react";
 import {
   View,
   Text,
@@ -25,21 +25,77 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async () => {
-    if (!name || !email || !password) {
-      alert("Please fill in all fields");
-      return;
+  const [nameErr, setNameErr] = useState("");
+  const [emailErr, setEmailErr] = useState("");
+  const [passwordErr, setPasswordErr] = useState("");
+  const [password2Err, setPassword2Err] = useState("");
+
+  const validateForm = () => {
+    if (name == '') {
+      setNameErr("Name is required");
+      return false;
+    } else {
+      setNameErr("");
+    }
+
+    if (name.length < 3) {
+      setNameErr("Name must be at least 3 characters long");
+      return false;
+    } else {
+      setNameErr("");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (email == '') {
+      setEmailErr("Email is required");
+      return false;
+    } else {
+      setEmailErr("");
+    }
+
+    if (email.match(emailRegex) == null) {
+      setEmailErr("Please enter a valid email address");
+      return false;
+    } else {
+      setEmailErr("");
     }
 
     if (password.length < 8) {
-      alert("Password must be at least 8 characters long");
-      return;
+      setPasswordErr("Password must be at least 8 characters long");
+      return false;
+    } else {
+      setPasswordErr("");
     }
 
+    if (password2 == '') {
+      setPassword2Err("Please confirm your password");
+      return false;
+    } else {
+      setPassword2Err("");
+    }
+
+    if (password != password2) {
+      setPassword2Err("Passwords do not match");
+      return false;
+    } else {
+      setPassword2Err("");
+    }
+
+    return true;
+  }
+
+  const handleRegister = async () => {
     try {
       setLoading(true);
+
+      if (!validateForm()){
+        return;
+      }
+
       const response = await authService.register({ name, email, password });
       if (response && response.userId) {
         navigation.replace("Verify", { userId: response.userId });
@@ -67,7 +123,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
         >
           <View style={styles.header}>
             <Image
-              source={require("../../../assets/logo.png")}
+              source={require("../../../assets/guardmed-dark.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -85,6 +141,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                 onChangeText={setName}
                 autoCapitalize="words"
               />
+              <Text className="fullname-error" style={styles.inputError}>{nameErr ?? ''}</Text>
             </View>
 
             <View style={styles.inputContainer}>
@@ -98,6 +155,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                 autoCapitalize="none"
                 autoComplete="email"
               />
+              <Text className="email-error" style={styles.inputError}>{emailErr ?? ''}</Text>
             </View>
 
             <View style={styles.inputContainer}>
@@ -109,6 +167,19 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                 onChangeText={setPassword}
                 secureTextEntry
               />
+              <Text className="password-error" style={styles.inputError}>{passwordErr ?? ''}</Text>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm password"
+                value={password2}
+                onChangeText={setPassword2}
+                secureTextEntry
+              />
+              <Text className="password2-error" style={styles.inputError}>{password2Err ?? ''}</Text>
             </View>
 
             <TouchableOpacity
@@ -150,12 +221,12 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 90,
+    marginBottom: 40,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+    width: 130,
+    height: 130,
+    marginBottom: 0,
     marginTop: 40,
   },
   title: {
@@ -173,7 +244,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   label: {
     fontSize: 14,
@@ -196,12 +267,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#027E6A",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
     marginTop: 20,
-    shadowColor: "#007AFF",
+    shadowColor: "#027E6A",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -211,7 +282,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: "#99c9ff",
+    backgroundColor: "#2B4F49",
   },
   buttonText: {
     color: "white",
@@ -229,10 +300,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   link: {
-    color: "#007AFF",
+    color: "#027E6A",
     fontSize: 14,
     fontWeight: "600",
   },
+  inputError: {
+    color: "#ff0000",
+    fontSize: 12,
+    paddingLeft: 10,
+  }
 });
 
 export default RegisterScreen;
