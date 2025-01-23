@@ -3,9 +3,9 @@ import { StyleSheet, View, Button, Alert, Modal, Text, FlatList, TouchableOpacit
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import PharmacyService from '../services/PharmacyService';
+import axiosInstance from "../config/axios"; 
 import polyline from '@mapbox/polyline';
-import { EXPO_PUBLIC_API_HOST } from '@env';
 
 export default function MapScreen() {
     const [location, setLocation] = useState(null);
@@ -43,19 +43,15 @@ export default function MapScreen() {
 
         setLoadingPharmacies(true);
         try {
-            const url = `${EXPO_PUBLIC_API_HOST}/pharmacies/nearby-guard?lat=${location.latitude}&lng=${location.longitude}`;
-            const response = await axios.get(url, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-            });
-
-            if (response.data && response.data.length > 0) {
-                setPharmacies(response.data);
+            const pharmacies = await PharmacyService.getNearbyGuardPharmacies(location.latitude, location.longitude);
+            if (pharmacies && pharmacies.length > 0) {
+                setPharmacies(pharmacies);
                 setModalVisible(true);
             } else {
                 Alert.alert('No Pharmacies Found', 'No nearby pharmacies were found.');
             }
         } catch (error) {
-            Alert.alert('Error', error.response?.data?.message || 'An error occurred.');
+            Alert.alert('Error', 'Failed to fetch pharmacies.');
         } finally {
             setLoadingPharmacies(false);
         }
@@ -63,50 +59,50 @@ export default function MapScreen() {
 
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const toRad = (value) => (value * Math.PI) / 180;
-        const R = 6371; 
+        const R = 6371;
         const dLat = toRad(lat2 - lat1);
         const dLon = toRad(lon2 - lon1);
         const a =
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRad(lat1)) *
-                Math.cos(toRad(lat2)) *
-                Math.sin(dLon / 2) *
-                Math.sin(dLon / 2);
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return (R * c).toFixed(2); 
+        return (R * c).toFixed(2);
     };
+
 
     const getDirections = async (latitude, longitude) => {
-        if (!location) {
-            Alert.alert('Location Not Available', 'Please try again.');
-            return;
+      if (!location) {
+        Alert.alert('Location Not Available', 'Please try again.');
+        return;
+      }
+    
+      const origin = `${location.longitude},${location.latitude}`;
+      const destination = `${longitude},${latitude}`;
+      const url = `http://router.project-osrm.org/route/v1/driving/${origin};${destination}?overview=full&geometries=polyline`;
+    
+      setLoading(true);
+      try {
+        const response = await axiosInstance.get(url);
+        const route = response.data.routes[0];
+        if (route && route.geometry) {
+          const decodedPoints = polyline.decode(route.geometry).map(([lat, lng]) => ({
+            latitude: lat,
+            longitude: lng,
+          }));
+          setDirections(decodedPoints);
+          setModalVisible(false);
+        } else {
+          Alert.alert('Error', 'No route found.');
         }
-
-        const origin = `${location.longitude},${location.latitude}`;
-        const destination = `${longitude},${latitude}`;
-        const url = `http://router.project-osrm.org/route/v1/driving/${origin};${destination}?overview=full&geometries=polyline`;
-
-        setLoading(true);
-        try {
-            const response = await axios.get(url);
-            const route = response.data.routes[0];
-            if (route && route.geometry) {
-                const decodedPoints = polyline.decode(route.geometry).map(([lat, lng]) => ({
-                    latitude: lat,
-                    longitude: lng,
-                }));
-                setDirections(decodedPoints);
-                setModalVisible(false); 
-            } else {
-                Alert.alert('Error', 'No route found.');
-            }
-        } catch (error) {
-            Alert.alert('Error', 'Failed to fetch directions.');
-        } finally {
-            setLoading(false);
-        }
+      } catch (error) {
+        console.error("Error fetching directions:", error);
+        Alert.alert('Error', 'Failed to fetch directions.');
+      } finally {
+        setLoading(false);
+      }
     };
-
+    
+    
     if (!location) {
         return <ActivityIndicator size="large" color="#0000ff" />;
     }
@@ -165,10 +161,7 @@ export default function MapScreen() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Pharmacies Nearby</Text>
-
-                        {/* Separator line */}
                         <View style={styles.separator} />
-
                         <FlatList
                             data={pharmacies}
                             keyExtractor={(item, index) => index.toString()}
@@ -188,9 +181,7 @@ export default function MapScreen() {
                                     </Text>
                                     <TouchableOpacity
                                         style={styles.directionButton}
-                                        onPress={() =>
-                                            getDirections(item.location.lat, item.location.lng)
-                                        }
+                                        onPress={() => getDirections(item.location.lat, item.location.lng)}
                                     >
                                         <Text style={styles.directionButtonText}>Get Directions</Text>
                                     </TouchableOpacity>
@@ -206,7 +197,6 @@ export default function MapScreen() {
                     </View>
                 </View>
             </Modal>
-
         </View>
     );
 }
