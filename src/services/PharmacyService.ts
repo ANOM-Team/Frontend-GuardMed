@@ -18,6 +18,18 @@ const PharmacyService = {
       console.error(error);
     }
   },
+
+  async getNearbyGuardPharmacies(latitude, longitude) {
+    try {
+      const response = await axiosInstance.get(`/pharmacies/nearby-guard`, {
+        params: { lat: latitude, lng: longitude },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching nearby pharmacies:", error);
+      throw error;
+    }
+  },
 };
 
 export default PharmacyService;
