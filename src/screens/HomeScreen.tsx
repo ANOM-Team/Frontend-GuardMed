@@ -1,44 +1,55 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
-import JWTService from '../services/JWTService';
+import { StyleSheet, View } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 
-type HomeScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
-};
+export default function MapScreen() {
+    const [location, setLocation] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
 
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                setErrorMsg('Permission to access location was denied');
+                return;
+            }
 
+            let userLocation = await Location.getCurrentPositionAsync({});
+            setLocation(userLocation.coords);
+        })();
+    }, []);
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+    if (!location) {
+        return null; 
+     }
 
-
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Home</Text>
-      <Button 
-        title="Aller à la page détails" 
-        onPress={() => navigation.navigate('Details')}
-      />
-      <Button
-        title="Voir la carte"
-        onPress={() => navigation.navigate('Map')}
-      />
-    </View>
-  );
-};
+    return (
+        <View style={styles.container}>
+            <MapView
+                style={styles.map}
+                initialRegion={{
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                }}
+            >
+                <Marker
+                    coordinate={{ latitude: location.latitude, longitude: location.longitude }}
+                    title="Votre position"
+                    description="Vous êtes ici"
+                />
+            </MapView>
+        </View>
+    );
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
+    container: {
+        flex: 1,
+    },
+    map: {
+        flex: 1,
+    },
 });
-
-export default HomeScreen;

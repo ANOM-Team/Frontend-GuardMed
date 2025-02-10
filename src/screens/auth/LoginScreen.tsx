@@ -27,25 +27,68 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, sendCode } = useAuth();
+  const [emailErr, setEmailErr] = useState("");
+  const [passwordErr, setPasswordErr] = useState("");
+
+  const validateForm = () => {
+    if (email == '') {
+      setEmailErr("Email is required");
+      return false;
+    } else {
+      setEmailErr("");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email.match(emailRegex) == null) {
+      setEmailErr("Invalid email format");
+      return false;
+    } else {
+      setEmailErr("");
+    }
+
+    if (password == '') {
+      setPasswordErr("Password is required");
+      return false;
+    } else {
+      setPasswordErr("");
+    }
+
+    if (password.length < 8) {
+      setPasswordErr("Password must be at least 8 characters long");
+      return false;
+    } else {
+      setPasswordErr("");
+    }
+
+    return true;
+  }
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+
+    if (!validateForm()) {
       return;
     }
 
     try {
       setLoading(true);
       console.log("Login attempt with:", { email, password });
-      await signIn(email, password);
-      // La navigation sera gérée automatiquement par AppNavigation
-    } catch (error) {
+      const response = await signIn(email, password);
+
+      if (response && response.statusCode === 200) {
+        navigation.navigate("Home");
+      } else if (response && response.statusCode === 400) {
+        Alert.alert("Login Error", response.message);
+        await sendCode(email);
+      } else if ( response && response.statusCode === 401 ) {
+        const response2 = await sendCode(email);
+        console.log("Response2:", response2);
+        navigation.navigate("Verify", { userId: response2.userId });
+      } else if ( response && response.statusCode === 404 ) {
+        Alert.alert("Login Error", "User not found");
+      }
+    } catch (error: any) {
       console.error("Login error:", error);
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Login failed"
-      );
     } finally {
       setLoading(false);
     }
@@ -60,7 +103,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Image
-              source={require("../../../assets/logo.png")}
+              source={require("../../../assets/guardmed-dark.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -88,6 +131,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                   autoComplete="email"
                 />
               </View>
+              <Text className="email-error" style={styles.inputError}>{emailErr ?? ''}</Text>
             </View>
 
             <View style={styles.inputContainer}>
@@ -117,6 +161,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                   />
                 </TouchableOpacity>
               </View>
+              <Text className="password-error" style={styles.inputError}>{passwordErr ?? ''}</Text>
             </View>
 
             <TouchableOpacity style={styles.forgotPassword}>
@@ -163,9 +208,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+    width: 130,
+    height: 130,
+    marginBottom: 10,
   },
   title: {
     fontSize: 28,
@@ -181,7 +226,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   label: {
     fontSize: 14,
@@ -218,19 +263,27 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: "#007AFF",
+    color: "#027E6A",
     fontSize: 14,
     fontWeight: "600",
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#027E6A",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
     marginTop: 20,
+    shadowColor: "#027E6A",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: "#99c9ff",
+    backgroundColor: "#2B4F49",
   },
   buttonText: {
     color: "white",
@@ -248,10 +301,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   link: {
-    color: "#007AFF",
+    color: "#027E6A",
     fontSize: 14,
     fontWeight: "600",
   },
+  inputError: {
+    color: "#ff0000",
+    fontSize: 12,
+    paddingLeft: 10,
+  }
 });
 
 export default LoginScreen;

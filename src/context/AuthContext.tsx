@@ -11,10 +11,11 @@ type AuthContextType = {
   userId: string | null;
   accessToken: string | null;
   userRole: string | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (name: string, email: string, password: string) => Promise<void>;
-  verifyCode: (code: number) => Promise<void>;
-  signOut: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signUp: (name: string, email: string, password: string) => Promise<any>;
+  verifyCode: (code: number) => Promise<any>;
+  signOut: () => Promise<any>;
+  sendCode: (email: string) => Promise<any>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,8 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setAccessToken(access_token);
       setUserRole(role);
       setIsAuthenticated(true);
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      return error.response.data;
     }
   };
 
@@ -84,40 +85,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       await AsyncStorage.setItem("userId", userId);
       setUserId(userId);
-    } catch (error) {
+    } catch (error: any) {
       throw error;
     }
   };
 
   const verifyCode = async (code: number) => {
     try {
-      const storedUserId = await AsyncStorage.getItem("userId");
-      if (!storedUserId) throw new Error("User ID not found");
-
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (!storedUserId) throw new Error('User ID not found');
+  
       const response = await axios.post(`${API_URL}/auth/verify`, {
         id: storedUserId,
         code,
       });
-
-      console.log("Verify response:", response.data);
-
+  
+      console.log('Verify response:', response.data);
+  
       const { access_token, role } = response.data;
-
+  
       if (access_token) {
-        await AsyncStorage.setItem("accessToken", access_token);
+        await AsyncStorage.setItem('accessToken', access_token);
         setAccessToken(access_token);
       }
+  
       if (role) {
-        await AsyncStorage.setItem("userRole", role);
+        await AsyncStorage.setItem('userRole', role);
         setUserRole(role);
       }
-
+  
       setIsAuthenticated(true);
-    } catch (error) {
-      console.error("Verify error:", error);
-      throw error;
+  
+      return response.data;
+    } catch (error: any) {
+      console.error('Verify error:', error);
+      return { error: error.message || 'Verification failed' };
     }
   };
+
+  const sendCode = async (email: string) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/resend`, {
+        email,
+      });
+
+      console.log("Send code response:", response.data);
+
+      await AsyncStorage.setItem("userId", response.data.userId);
+      return response.data;
+    } catch (error: any) {
+      console.error("Error sending code:", error);
+      return { error: error.message || "Failed to send code" };
+    }
+  }
 
   const signOut = async () => {
     try {
@@ -143,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signUp,
         verifyCode,
         signOut,
+        sendCode,
       }}
     >
       {children}
